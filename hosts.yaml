@@ -1,0 +1,42 @@
+[local]
+localhost 
+ansible_python_interpreter="/usr/local/bin/python3"
+
+# Create an OSEv3 group that contains the masters and nodes groups
+[OSEv3:children]
+masters
+nodes
+etcd
+
+# Set variables common for all OSEv3 hosts
+[OSEv3:vars]
+ansible_user=root
+ansible_become=true
+deployment_type=origin
+containerized=true
+openshift_release=v3.6.1
+openshift_router_selector='router=true'
+openshift_registry_selector='registry=true'
+openshift_master_default_subdomain=165.227.114.115.xip.io
+ansible_python_interpreter="/usr/bin/python3"
+
+# enable htpasswd auth
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
+openshift_master_htpasswd_users={'admin': '$apr1$zgSjCrLt$1KSuj66CggeWSv.D.BXOA1', 'user': '$apr1$.gw8w9i1$ln9bfTRiD6OwuNTG5LvW50'}
+
+# host group for masters
+[masters]
+165.227.114.115 openshift_public_hostname=165.227.114.115 openshift_hostname=10.132.111.40
+
+# host group for etcd, should run on a node that is not schedulable
+[etcd]
+165.227.114.115
+
+# host group for worker nodes, we list master node here so that
+# openshift-sdn gets installed. We mark the master node as not
+# schedulable.
+[nodes]
+ansible_python_interpreter="/usr/bin/python3"
+165.227.114.115 openshift_hostname=10.132.111.40   openshift_schedulable=false
+165.227.114.119 openshift_hostname=10.132.112.93    openshift_node_labels="{'router':'true','registry':'true'}"
+165.227.114.80 openshift_hostname=10.132.105.131   openshift_node_labels="{'router':'true','registry':'true'}"
